@@ -34,23 +34,31 @@ defmodule Electric.Satellite.Permissions.Client.Format do
     |> do_op("AND")
   end
 
+  defp do_op([], _op), do: []
+
   defp do_op([clause], _op) do
     lines([clause])
   end
 
   defp do_op(clauses, op) do
-    lines(
-      clauses
-      |> Enum.to_list()
-      |> intersperse_op(op)
-    )
+    lines(intersperse_op(clauses, op))
   end
 
-  defp intersperse_op([], _op), do: []
-  defp intersperse_op([clause], op), do: [[op, " (", clause, ")"]]
-
+  # not just a simple Enum.intersperse  because we need to keep the clauses
+  # on the same line as the `and`, so
+  #   `[a, ["and", b], ["and", c]]`
+  # not
+  #   `[a, "and", b, "and", c]`
   defp intersperse_op([c1, c2 | rest], op) do
-    [["(", c1, ")"], [op, " (", c2, ")"] | intersperse_op(rest, op)]
+    [["(", c1, ")"], indent([[op, " (", c2, ")"] | intersperse_rest(rest, op)])]
+  end
+
+  defp intersperse_rest([], _op) do
+    []
+  end
+
+  defp intersperse_rest([c1 | rest], op) do
+    [[op, " (", c1, ")"] | intersperse_rest(rest, op)]
   end
 
   def when_(test) do

@@ -12,8 +12,8 @@ defmodule ElectricTest.PermissionsHelpers do
            "create table workspaces (id uuid primary key)",
            "create table projects (id uuid primary key, workspace_id uuid not null references workspaces (id))",
            "create table issues (id uuid primary key, project_id uuid not null references projects (id), description text)",
-           "create table comments (id uuid primary key, issue_id uuid not null references issues (id), comment text, owner text)",
-           "create table reactions (id uuid primary key, comment_id uuid not null references comments (id))",
+           "create table comments (id uuid primary key, issue_id uuid not null references issues (id), comment text, owner text, author_id uuid references users (id))",
+           "create table reactions (id uuid primary key, comment_id uuid not null references comments (id), is_public bool)",
            "create table users (id uuid primary key, role text not null default 'normie')",
            "create table teams (id uuid primary key)",
            "create table tags (id uuid primary key, tag text not null)",
@@ -30,7 +30,8 @@ defmodule ElectricTest.PermissionsHelpers do
               id uuid primary key,
               user_id uuid not null references users (id),
               project_id uuid not null references projects (id),
-              role text not null
+              role text not null,
+              valid bool
            )
            """,
            """
@@ -94,6 +95,21 @@ defmodule ElectricTest.PermissionsHelpers do
               role text not null,
               foreign key (root_id1, root_id2) references compound_root (id1, id2)
            )
+           """,
+           """
+           create table lotsoftypes (
+             id uuid primary key,
+             user_id uuid not null,
+             parent_id uuid not null,
+             name text,
+             value text,
+             amount integer,
+             valid bool,
+             percent float,
+             ilist integer[],
+             slist text[],
+             inserted_at timestamp with time zone
+           )
            """
          ]}
       ]
@@ -116,6 +132,10 @@ defmodule ElectricTest.PermissionsHelpers do
   defmodule Auth do
     def user_id do
       "92bafe18-a818-4a3f-874f-590324140478"
+    end
+
+    def not_user_id do
+      "e0a09d39-d620-4a28-aa18-8d3eacc5da4e"
     end
 
     def user(id \\ user_id()) do

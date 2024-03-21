@@ -38,6 +38,7 @@ defmodule Electric.Satellite.Permissions.Client do
 
   import Electric.Satellite.Permissions.Client.Format
 
+  @actions [:insert, :delete, :update]
   @dialect Electric.Satellite.Permissions.Client.SQLite
 
   @doc false
@@ -100,7 +101,7 @@ defmodule Electric.Satellite.Permissions.Client do
           |> Stream.map(fn {fk, pk} -> [ref(a, fk, @dialect), " = ", ref(b, pk, @dialect)] end)
           |> and_()
 
-        lines([["LEFT JOIN ", @dialect.table(a), " ON "], indent(clauses)])
+        lines([["INNER JOIN ", @dialect.table(a), " ON "], indent(clauses)])
       end)
 
     where =
@@ -170,8 +171,7 @@ defmodule Electric.Satellite.Permissions.Client do
 
   defp table_triggers(table, perms, schema) do
     table_grants =
-      perms.source.rules.grants
-      |> Stream.map(&Permissions.Grant.new/1)
+      perms.grants
       # can remove these because if they exist they'll be hard-coded into the tests
       # and this list of grants is only used to test for local roles
       |> Stream.reject(&(&1.role in [:ANYONE, :AUTHENTICATED]))
@@ -267,8 +267,7 @@ defmodule Electric.Satellite.Permissions.Client do
     {:ok, pks} = pks(schema, table)
 
     grants =
-      perms.source.rules.grants
-      |> Stream.map(&Permissions.Grant.new/1)
+      perms.grants
       |> Permissions.Grant.for_table(table)
       |> Permissions.Grant.for_privilege(:UPDATE)
 
@@ -417,11 +416,11 @@ defmodule Electric.Satellite.Permissions.Client do
   end
 
   defp column_test(disallowed_columns, :UPDATE) do
-    lines(
+    [
       disallowed_columns
       |> Enum.map(&~s[NEW."#{&1}" IS OLD."#{&1}"])
       |> and_()
-    )
+    ]
   end
 
   defp unscoped_trigger_tests(role_grants, grants, perms, schema, table, action) do
@@ -880,5 +879,10 @@ defmodule Electric.Satellite.Permissions.Client do
 
   defp cols(schema, table) do
     Map.fetch(schema.columns, table)
+  end
+
+  def sql_expr(%Permissions.Eval.ExpressionContext{} = expr, action, values)
+      when action in @actions do
+    @dialect.expr(Map.fetch!(expr.expr, action), values)
   end
 end
