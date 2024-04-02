@@ -8,7 +8,7 @@ defmodule Electric.Replication.Postgres.Client do
 
   import Electric.Postgres.Dialect.Postgresql, only: [quote_ident: 1]
 
-  alias Electric.Postgres.{Extension, Lsn}
+  alias Electric.Postgres.{Extension, Lsn, Repo}
   alias Electric.Replication.Connectors
 
   require Logger
@@ -25,6 +25,25 @@ defmodule Electric.Replication.Postgres.Client do
       Connectors.pop_extraneous_conn_opts(conn_opts)
 
     :epgsql.connect(ip_addr, username, password, epgsql_conn_opts)
+  end
+
+  @spec with_pool(Connectors.origin(), (-> any)) :: any
+  def with_pool(origin, fun) when is_binary(origin) and is_function(fun, 0) do
+    Repo.put_dynamic_repo(Repo.name(origin))
+    Repo.checkout(fun)
+  end
+
+  @spec pooled_query!(Connectors.origin(), String.t(), [term]) :: {[String.t()], [tuple()]}
+  def pooled_query!(origin, query_str, params) when is_binary(origin) do
+    with_pool(origin, fn -> query!(query_str, params) end)
+  end
+
+  @spec query!(String.t(), [term]) :: {[String.t()], [tuple()]}
+  def query!(query_str, params \\ []) when is_binary(query_str) and is_list(params) do
+    true = Repo.checked_out?()
+
+    %Postgrex.Result{columns: columns, rows: rows} = Repo.query!(query_str, params)
+    {columns, rows}
   end
 
   @spec with_conn(Connectors.connection_opts(), fun()) :: term() | {:error, term()}
