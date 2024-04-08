@@ -40,6 +40,19 @@ defmodule Electric.Replication.Postgres.Client do
     Repo.checkout(fun)
   end
 
+  def pooled_transaction(origin, mode \\ nil, fun)
+      when is_binary(origin) and is_function(fun, 0) do
+    with_pool(origin, fn ->
+      Repo.transaction(fn ->
+        if mode do
+          Repo.query!("SET TRANSACTION #{mode}")
+        end
+
+        fun.()
+      end)
+    end)
+  end
+
   @doc """
   Execute the given SQL query/statement using a pooled DB connection.
 
@@ -47,6 +60,7 @@ defmodule Electric.Replication.Postgres.Client do
   """
   @spec pooled_query!(Connectors.origin(), String.t(), [term]) :: {[String.t()], [tuple()]}
   def pooled_query!(origin, query_str, params) when is_binary(origin) do
+    # def pooled_query!(origin, query_str, params \\ []) when is_binary(origin) do
     with_pool(origin, fn -> query!(query_str, params) end)
   end
 
