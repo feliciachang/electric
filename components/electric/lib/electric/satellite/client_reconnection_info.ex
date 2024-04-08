@@ -147,7 +147,7 @@ defmodule Electric.Satellite.ClientReconnectionInfo do
   and is cleared up to a new checkpoint when a new checkpoint is made.
   """
 
-  use GenServer
+  use Electric, :gen_server
 
   alias Electric.Postgres.CachedWal
   alias Electric.Postgres.Extension
@@ -190,15 +190,6 @@ defmodule Electric.Satellite.ClientReconnectionInfo do
           {additional_data_txn_key(), graph_diff :: Graph.t(),
            source_txns :: [non_neg_integer(), ...]}
   @type additional_data_row :: additional_data_sub_row() | additional_data_txn_row()
-
-  def start_link(connector_config) do
-    origin = Connectors.origin(connector_config)
-    GenServer.start_link(__MODULE__, connector_config, name: name(origin))
-  end
-
-  def name(origin) do
-    Electric.name(__MODULE__, origin)
-  end
 
   @delete_subscriptions_query """
   DELETE FROM
@@ -743,6 +734,7 @@ defmodule Electric.Satellite.ClientReconnectionInfo do
   def init(connector_config) do
     origin = Connectors.origin(connector_config)
 
+    reg(origin)
     Logger.metadata(component: "ClientReconnectionInfo")
 
     checkpoint_table = :ets.new(@checkpoint_ets, [:named_table, :public, :set])
