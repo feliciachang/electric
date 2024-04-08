@@ -1029,7 +1029,7 @@ defmodule Electric.Satellite.Protocol do
       # Please see documentation on that function for context on the next `receive` block.
       fun.({id, requests, context},
         reply_to: {ref, parent},
-        connection: state.connector_config,
+        origin: state.origin,
         telemetry_span: span
       )
     end)
@@ -1090,7 +1090,7 @@ defmodule Electric.Satellite.Protocol do
       # Please see documentation on that function for context on the next `receive` block.
       fun.(move_in_ref, actions, context,
         reply_to: {ref, parent},
-        connection: state.connector_config
+        origin: state.origin
       )
     end)
 
