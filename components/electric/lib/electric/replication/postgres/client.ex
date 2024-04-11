@@ -59,8 +59,7 @@ defmodule Electric.Replication.Postgres.Client do
   The pool is managed by `Electric.Postgres.Repo` and the query is executed by invoking `query!/2`.
   """
   @spec pooled_query!(Connectors.origin(), String.t(), [term]) :: {[String.t()], [tuple()]}
-  def pooled_query!(origin, query_str, params) when is_binary(origin) do
-    # def pooled_query!(origin, query_str, params \\ []) when is_binary(origin) do
+  def pooled_query!(origin, query_str, params \\ []) when is_binary(origin) do
     with_pool(origin, fn -> query!(query_str, params) end)
   end
 
