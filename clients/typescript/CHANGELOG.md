@@ -1,5 +1,12 @@
 # electric-sql
 
+## 0.10.2
+
+### Patch Changes
+
+- 22a7555a: Fix CLI `PROXY` option to correctly infer database name and not print introspection url.
+- 22a7555a: Fix `ELECTRIC_` options not working as CLI arguments
+
 ## 0.10.1
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @core/electric
 
+## 0.10.2
+
+### Patch Changes
+
+- 69eb03c2: fix: migration statements in a transaction should preserve original order when sent to the clients.
+
 ## 0.10.1
 
 ### Patch Changes
